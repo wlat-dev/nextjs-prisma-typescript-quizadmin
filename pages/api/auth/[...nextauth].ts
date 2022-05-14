@@ -56,9 +56,7 @@ export default NextAuth({
     }),
   ],
 
-  theme: {
-    colorScheme: "light",
-  },
+
   session: {
     strategy: "jwt",
   },
@@ -78,8 +76,9 @@ export default NextAuth({
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token, user }) {
       session.accessToken = token.accessToken;
+      session.userRole = user?.role;
       return session;
     },
   },

@@ -1,71 +1,136 @@
 import * as React from "react";
-import type { NextPage } from "next";
-import type { AppProps } from "next/app";
+import type { GetServerSidePropsContext, NextComponentType } from "next";
+import { GetServerSideProps } from "next";
+import type { AppContext, AppProps } from "next/app";
 import Head from "next/head";
-import { ThemeProvider } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
-import { CacheProvider, EmotionCache } from "@emotion/react";
-import createEmotionCache from "../src/utils/createEmotionCache";
-import Layout from "../src/components/ui/Layout";
-import { ColorModeContext } from "../src/utils/color-mode-context";
-import { createTheme, PaletteMode } from "@mui/material";
-import getDesignTokens from "../src/utils/getDesignTokens";
-import { SessionProvider } from "next-auth/react";
 import { Hydrate, QueryClient, QueryClientProvider } from "react-query";
 import { ReactQueryDevtools } from "react-query/devtools";
+import {
+  MantineProvider,
+  ColorScheme,
+  ColorSchemeProvider,
+  Navbar,
+  Header,
+  Footer,
+  Aside,
+  Text,
+  MediaQuery,
+  Burger,
+  Skeleton,
+  useMantineTheme,
+} from "@mantine/core";
+import { NotificationsProvider } from "@mantine/notifications";
+import "katex/dist/katex.min.css";
 
-// Client-side cache, shared for the whole session of the user in the browser.
-const clientSideEmotionCache = createEmotionCache();
+import { useSession } from "../src/utils/useSession";
+import { getSession, SessionProvider } from "next-auth/react";
 
-type NextPageWithLayout = NextPage & {
-  getLayout?: (page: React.ReactElement) => React.ReactNode;
+// import { SessionProvider, useSession } from "next-auth/react";
+
+import Layout from "../src/components/ui/Layout";
+import { useLocalStorage } from "@mantine/hooks";
+
+type CustomAppProps = AppProps & {
+  Component: NextComponentType & { auth?: boolean }; // add auth type
 };
 
-type AppPropsWithLayout = AppProps & {
-  emotionCache?: EmotionCache;
-  Component: NextPageWithLayout;
-};
-
-export default function MyApp({
-  Component,
-  pageProps,
-  emotionCache = clientSideEmotionCache,
-}: AppPropsWithLayout) {
-  const [mode, setMode] = React.useState<PaletteMode>("light");
-  const colorMode = React.useMemo(
-    () => ({
-      toggleColorMode: () => {
-        setMode((prevMode: PaletteMode) =>
-          prevMode === "light" ? "dark" : "light"
-        );
-      },
-    }),
-    []
-  );
-  const theme = React.useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
-
+export default function App(
+  props: CustomAppProps & { colorScheme: ColorScheme }
+) {
   const [queryClient] = React.useState(() => new QueryClient());
 
+  const { Component, pageProps } = props;
+
+  /* Toggle Color Scheme */
+  const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
+    key: "mantine-color-scheme",
+    defaultValue: "light",
+    getInitialValueInEffect: true,
+  });
+
+  const toggleColorScheme = (value?: ColorScheme) =>
+    setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
+
+  const [isVisible, setIsVisible] = React.useState(true);
+
   return (
-    <CacheProvider value={emotionCache}>
+    <>
       <Head>
-        <meta name="viewport" content="initial-scale=1, width=device-width" />
+        <title>Latshaw Prep</title>
+        <meta
+          name="viewport"
+          content="minimum-scale=1, initial-scale=1, width=device-width"
+        />
+        <link rel="shortcut icon" href="/favicon.svg" />
       </Head>
-      <ColorModeContext.Provider value={colorMode}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <SessionProvider session={pageProps.session} refetchInterval={0}>
+      <ColorSchemeProvider
+        colorScheme={colorScheme}
+        toggleColorScheme={toggleColorScheme}
+      >
+        <MantineProvider
+          theme={{ colorScheme }}
+          withGlobalStyles
+          withNormalizeCSS
+        >
+          <NotificationsProvider>
             <QueryClientProvider client={queryClient}>
               <ReactQueryDevtools initialIsOpen={false} />
               <Hydrate state={pageProps.dehydratedState}>
-                <Layout>
-                  <Component {...pageProps} />
-                </Layout>
+                <SessionProvider>
+                  <Auth>
+                    <Layout visible={{ isVisible, setIsVisible }}>
+                      <Component {...pageProps} />
+                    </Layout>
+                  </Auth>
+                </SessionProvider>
               </Hydrate>
             </QueryClientProvider>
-          </SessionProvider>
-        </ThemeProvider>
-      </ColorModeContext.Provider>
-    </CacheProvider>
+          </NotificationsProvider>
+        </MantineProvider>
+      </ColorSchemeProvider>
+    </>
   );
 }
+
+const Auth = ({ children }: React.PropsWithChildren<{}>) => {
+  const [session, loading] = useSession({
+    required: true,
+    queryConfig: {
+      staleTime: 60 * 1000 * 60 * 3, // 3 hours
+      refetchInterval: 60 * 1000 * 5, // 5 minutes
+    },
+  });
+  if (session) {
+    return <>{children}</>;
+  } else if (!session && !loading) {
+    return <div>unauthenticated!</div>;
+  }
+  return (
+    <div>
+      <>
+        <Skeleton height={50} circle mb="xl" />
+        <Skeleton height={8} radius="xl" />
+        <Skeleton height={8} mt={6} radius="xl" />
+        <Skeleton height={8} mt={6} width="70%" radius="xl" />
+      </>
+    </div>
+  );
+};
+
+// Theme from cookies instead of local storage
+// -------------------------------------------
+// import { getCookie, setCookies } from "cookies-next";
+// const [colorScheme, setColorScheme] = React.useState<ColorScheme>(
+//   props.colorScheme
+// );
+// const toggleColorScheme = (value?: ColorScheme) => {
+//   const nextColorScheme =
+//     value || (colorScheme === "dark" ? "light" : "dark");
+//   setColorScheme(nextColorScheme);
+//   setCookies("mantine-color-scheme", nextColorScheme, {
+//     maxAge: 60 * 60 * 24 * 30,
+//   });
+// };
+// App.getInitialProps = ({ ctx }: { ctx: GetServerSidePropsContext }) => ({
+//   colorScheme: getCookie("mantine-color-scheme", ctx) || "light",
+// });

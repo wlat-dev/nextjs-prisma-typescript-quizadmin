@@ -1,141 +1,200 @@
-import * as React from "react";
+import React from "react";
 import Image from "next/image";
-import { Controller, useForm } from "react-hook-form";
-import { FormInputDropdown } from "../../src/components/ui/Form/FormInputDropdown";
-import { FormInputText } from "../../src/components/ui/Form/FormInputText";
-import { FormInputTextMultiline } from "../../src/components/ui/Form/FormInputTextMultiline";
-import {
-  Box,
-  FormControl,
-  Container,
-  Button,
-  Grid,
-  Select,
-  MenuItem,
-  InputLabel,
-  Paper,
-} from "@mui/material";
+import ReactMarkdown from "react-markdown";
+import rehypeKatex from "rehype-katex";
+import remarkMath from "remark-math";
 import "katex/dist/katex.min.css";
-import TeX from "@matejmazur/react-katex";
+import { useForm } from "@mantine/form";
+import {
+  Paper,
+  Container,
+  Grid,
+  TextInput,
+  NumberInput,
+  useMantineTheme,
+  Text,
+  Textarea,
+  createStyles,
+  MultiSelect,
+  Button,
+} from "@mantine/core";
+import { FileWithPath, useDropzone } from "react-dropzone";
+import { useQuery } from "react-query";
+import {
+  GetStaticProps,
+  InferGetStaticPropsType,
+  NextPageContext,
+} from "next/types";
+import prisma from "../../src/utils/prisma";
 
-export default function QuestionBuilder() {
-  const [isUpload, setIsUpload] = React.useState(true);
-  const [file, setFile] = React.useState<string>();
-  const [fileData, setFileData] = React.useState<FormData>();
-  const [questionTextInput, setQuestionTextInput] = React.useState<string>("");
+import { Prisma, Question, Quiz, Topic } from "@prisma/client";
 
-  const handleImageChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ): void => {
-    const files = event.target.files;
-    if (!files) return;
-    setFile(URL.createObjectURL(files[0]) as string);
+import MediaUploader from "../../src/components/admin/QuestionBuilder/MediaUploader";
+import { useSession } from "../../src/utils/useSession";
+import { responseSymbol } from "next/dist/server/web/spec-compliant/fetch-event";
+import { string } from "zod";
+
+
+export default function questionbuilder({
+  topics,
+  quizzes,
+}: InferGetStaticPropsType<typeof getStaticProps>) {
+  const [difficulty, setDifficulty] = React.useState<number>(0);
+  const [image, setImage] = React.useState<FileWithPath | undefined>();
+  const [equation, setEquationValue] = React.useState<string>("");
+  const [questionText, setQuestionText] = React.useState<string>("");
+  const [answer, setAnswer] = React.useState<string>("");
+  const [selectedQuiz, setSelectedQuiz] = React.useState<Quiz>();
+  const [selectedTopic, setSelectedTopic] = React.useState<Topic>();
+
+
+  // let quizOptions: object[][] = [];
+  // if (quizzes) {
+  //   quizzes.forEach((quiz: Quiz) => {
+  //     quizOptions.push([
+  //       quiz,
+  //       {
+  //         label: quiz.quiz_title,
+  //         value: quiz.id,
+  //       },
+  //     ]);
+  //   });
+  // }
+
+  const theme = useMantineTheme();
+
+  const postQuestion = () => {
+    const data = {
+      difficulty: difficulty,
+      image_url: image ? URL.createObjectURL(image) : null,
+      equation: equation,
+      question_text: questionText,
+      answer_formula: answer,
+      topics: selectedTopic,
+      quizzes: selectedQuiz,
+    };
+    fetch("/api/questions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    }).then((res) => res.json());
   };
 
-  
-
-  const { register, reset, handleSubmit, control } = useForm();
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    postQuestion();
+  };
 
   return (
-    <Grid
-      container
-      direction="row"
-      sx={{ justifyContent: "center", alignItems: "center" }}
-    >
-      <Grid
-        item
-        xs={6}
-        sx={{
-          padding: 3,
-        }}
-      >
-        <Grid container direction="column" justifyContent="center">
-          <Grid
-            item
-            sx={{
-              width: "300px",
-              height: "300px",
-              position: "relative",
-            }}
-          >
-            {file ? <Image src={file} layout="fill" objectFit="contain" /> : ""}
-          </Grid>
-          <Grid
-            item
-            sx={{
-              padding: 3,
-              width: "75%",
-              alignSelf: "center",
-            }}
-          >
-            <TeX>{}</TeX>
-          </Grid>
-          <Grid item sx={{ padding: 3, alignSelf: "left" }}>
-            <TeX>{questionTextInput}</TeX>
-          </Grid>
-        </Grid>
-      </Grid>
-      <Grid item xs={5}>
-        <form onSubmit={handleSubmit((data) => console.log(data))}>
-          <Grid
-            container
-            rowSpacing={3}
-            sx={{
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              border: 1,
-              borderRadius: 5,
-              borderColor: "secondary",
-              paddingY: 5,
-              marginTop: -1,
-            }}
-          >
-            <Grid item>
-              <FormInputDropdown
+    <Container size="lg">
+      <Paper shadow="sm" radius="lg" p="md">
+        <form onSubmit={handleSubmit}>
+          <Grid grow gutter="xl" styles={{ alignItems: "center" }}>
+            {/* Equation */}
+            <Grid.Col span={6}>
+              <TextInput
+                label="Equation"
+                value={equation}
+                onChange={(event) => setEquationValue(event.target.value)}
+              />
+            </Grid.Col>
+            <Grid.Col span={6} mt="lg">
+              <ReactMarkdown
+                children={`${equation}`}
+                remarkPlugins={[remarkMath]}
+                rehypePlugins={[rehypeKatex]}
+              />
+            </Grid.Col>
+            {/* Difficulty */}
+            <Grid.Col span={6}>
+              <NumberInput
                 label="Difficulty"
-                name="difficulty-select"
-                control={control}
-                options={[
-                  { label: "simple", value: 1 },
-                  { label: "easy", value: 2 },
-                  { label: "medium", value: 3 },
-                  { label: "hard", value: 4 },
-                  { label: "very hard", value: 5 },
-                ]}
+                value={difficulty}
+                defaultValue={0}
+                min={0}
+                max={5}
+                step={1}
+                onChange={(val: number) => setDifficulty(val)}
               />
-            </Grid>
-            <Grid item>
-              
-            </Grid>
-            <Grid item>
-              <FormInputTextMultiline
+            </Grid.Col>
+            <Grid.Col span={6} mt="lg">
+              {difficulty}
+            </Grid.Col>
+            <Grid.Col span={12} mt="lg">
+              <MediaUploader setImage={setImage} />
+            </Grid.Col>
+            {/* Question Text */}
+            <Grid.Col span={12} mt="lg">
+              <Textarea
                 label="Question Text"
-                name="question-text"
-                control={control}
-                setOnChange={setQuestionTextInput}
+                value={questionText}
+                onChange={(event) => setQuestionText(event.target.value)}
               />
-            </Grid>
-            <Grid item>
-              <Button variant="outlined" color="secondary" component="label">
-                Upload Image
-                <input
-                  accept="image/*"
-                  type="file"
-                  onChange={handleImageChange}
-                  hidden
-                />
-              </Button>
-            </Grid>
-            <Grid item>
-              <Button variant="contained" color="primary" component="label">
-                Submit Question
-                <input type="submit" hidden />
-              </Button>
-            </Grid>
+            </Grid.Col>
+            <Grid.Col
+              span={12}
+              sx={{
+                padding: theme.spacing.md,
+                fontSize: theme.fontSizes.sm,
+              }}
+            >
+              <ReactMarkdown
+                children={`${questionText}`}
+                remarkPlugins={[remarkMath]}
+                rehypePlugins={[rehypeKatex]}
+              />
+            </Grid.Col>
+            {/* Answer */}
+            <Grid.Col span={12}>
+              <Textarea
+                label="Answer"
+                value={answer}
+                onChange={(event) => setAnswer(event.target.value)}
+              />
+            </Grid.Col>
+            <Grid.Col span={12} mt={"lg"}>
+              <select
+                onChange={(e) => setSelectedQuiz(quizzes[e.target.value])}
+              >
+                {quizzes.map((option: Quiz, index: number) => (
+                  <option key={index} value={index}>
+                    {option.quiz_title}
+                  </option>
+                ))}
+              </select>
+            </Grid.Col>
+            <Grid.Col span={12} mt={"lg"}>
+              <select
+                onChange={(e) => setSelectedTopic(topics[e.target.value])}
+              >
+                {topics.map((option: Topic, index: number) => (
+                  <option key={index} value={index}>
+                    {option.topic_title}
+                  </option>
+                ))}
+              </select>
+            </Grid.Col>
+            <Button type="submit" mx="auto" mt="lg">
+              Submit
+            </Button>
           </Grid>
         </form>
-      </Grid>
-    </Grid>
+      </Paper>
+    </Container>
   );
 }
+
+export const getStaticProps: GetStaticProps = async () => {
+  const topics = await prisma.topic.findMany();
+
+  const quizzes: Quiz[] = await prisma.quiz.findMany();
+
+  return {
+    props: {
+      topics,
+      quizzes,
+    },
+  };
+};

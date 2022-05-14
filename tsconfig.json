@@ -8,7 +8,7 @@
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
     "esModuleInterop": true,
-    "module": "CommonJS",
+    "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -22,7 +22,8 @@
     "**/*.ts",
     "**/*.tsx",
     "hooks/useSession/useSession.ts",
-    "pages/api/prismatest.ts"
-, "jest.config.js"  ],
+    "pages/api/prismatest.ts",
+    "prisma/zod"
+, "jest.config.js", "prisma/zod", "src/utils/useSession.js", "src/components/admin/QuestionBuilder"  ],
   "exclude": ["node_modules"]
 }

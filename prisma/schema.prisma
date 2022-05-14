@@ -74,14 +74,14 @@ model Course {
 }
 
 model Enrollment {
-  id                  String        @id @default(cuid())
-  created_at          DateTime      @default(now())
-  updated_at          DateTime?     @updatedAt
+  id                  String    @id @default(cuid())
+  created_at          DateTime  @default(now())
+  updated_at          DateTime? @updatedAt
   student_id          String?
   course_id           String?
   current_grade_level String?
-  course              Course?       @relation(fields: [course_id], references: [id], onDelete: Cascade)
-  student             Student?      @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  course              Course?   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  student             Student?  @relation(fields: [student_id], references: [id], onDelete: Cascade)
 }
 
 model Instructor {
@@ -93,12 +93,13 @@ model Instructor {
 }
 
 model Lesson {
-  id         String    @id @default(cuid())
-  created_at DateTime  @default(now())
-  updated_at DateTime? @updatedAt
-  author     String?
-  module_id  String?
-  module     Module?   @relation(fields: [module_id], references: [id])
+  id           String    @id @default(cuid())
+  created_at   DateTime  @default(now())
+  updated_at   DateTime? @updatedAt
+  author       String?
+  module_id    String?
+  lesson_title String?
+  module       Module?   @relation(fields: [module_id], references: [id])
 }
 
 model Module {
@@ -145,17 +146,17 @@ model Question {
 }
 
 model QuizAttempt {
-  id                        String      @id @default(cuid())
-  created_at                DateTime    @default(now())
+  id                        String   @id @default(cuid())
+  created_at                DateTime @default(now())
   total_points              Int?
   points_scored             Int?
   enroll_id                 String?
-  answer_data               Json?       @db.Json
+  answer_data               Json?    @db.Json
   question_answered_count   Int?
   question_unanswered_count Int?
-  quiz                      Quiz        @relation(fields: [quiz_id], references: [id])
+  quiz                      Quiz     @relation(fields: [quiz_id], references: [id])
   quiz_id                   String
-  student                   Student     @relation(fields: [student_id], references: [id])
+  student                   Student  @relation(fields: [student_id], references: [id])
   student_id                String
 }
 
@@ -164,6 +165,7 @@ model Quiz {
   created_at DateTime      @default(now())
   updated_at DateTime?     @updatedAt
   author     String?
+  quiz_title String        @unique
   attempts   QuizAttempt[]
   questions  Question[]
   modules    Module[]
@@ -186,4 +188,14 @@ model Subject {
   updated_at DateTime? @updatedAt
 
   modules Module[]
+}
+
+generator zod {
+  provider              = "zod-prisma"
+  output                = "./zod"
+  relationModel         = true
+  modelCase             = "PascalCase"
+  modelSuffix           = "Model"
+  useDecimalJs          = true
+  prismaJsonNullability = true
 }
