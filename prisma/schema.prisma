@@ -68,7 +68,7 @@ model Course {
   created_at    DateTime     @default(now())
   updated_at    DateTime?    @updatedAt
   instructor_id String?
-  course_title  String       @unique
+  title         String       @unique
   author        String?
   enrollment    Enrollment[]
 }
@@ -93,13 +93,13 @@ model Instructor {
 }
 
 model Lesson {
-  id           String    @id @default(cuid())
-  created_at   DateTime  @default(now())
-  updated_at   DateTime? @updatedAt
-  author       String?
-  module_id    String?
-  lesson_title String?
-  module       Module?   @relation(fields: [module_id], references: [id])
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  author     String?
+  module_id  String?
+  title      String?
+  module     Module?   @relation(fields: [module_id], references: [id])
 }
 
 model Module {
@@ -115,18 +115,18 @@ model Module {
 }
 
 model TopicCategory {
-  id                   String    @id @default(cuid())
-  created_at           DateTime  @default(now())
-  updated_at           DateTime? @updatedAt
-  topic_category_title String    @unique
-  topics               Topic[]
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  title      String    @unique
+  topics     Topic[]
 }
 
 model Topic {
   id             String          @id @default(cuid())
   created_at     DateTime        @default(now())
   updated_at     DateTime?       @updatedAt
-  topic_title    String          @unique
+  title          String          @unique
   topic_category TopicCategory[]
   questions      Question[]
 }
@@ -165,7 +165,7 @@ model Quiz {
   created_at DateTime      @default(now())
   updated_at DateTime?     @updatedAt
   author     String?
-  quiz_title String        @unique
+  title      String        @unique
   attempts   QuizAttempt[]
   questions  Question[]
   modules    Module[]

@@ -58,31 +58,41 @@ export default function MediaUploader(props: MediaUploaderProps) {
   return (
     <>
       <div {...getRootProps({ className: "dropzone" })}>
-        <input {...getInputProps()} />
-        <Text size="sm">
-          Drag 'n' drop some files here, or click to select files
-        </Text>
-      </div>
-      <Grid className={classes.fileInputWrapper}>
-        {image ? (
-          <Grid.Col span={4} className={classes.child}>
-            <div
-              style={{
-                position: "relative",
-                minHeight: 120,
-                minWidth: 120,
-              }}
-            >
-              <Image src={URL.createObjectURL(image)} layout="fill" />
-            </div>
-            <Text size="xs">
-              {image.path} - {image.size} bytes
+        <Grid
+          className={classes.fileInputWrapper}
+          sx={{ justifyContent: "center" }}
+        >
+          <input {...getInputProps()} />
+          <Grid.Col span={12} sx={{}}>
+            <Text size="sm">
+              Drag 'n' drop some files here, or click to select files
             </Text>
           </Grid.Col>
-        ) : (
-          <div>No upload</div>
-        )}
-      </Grid>
+          {image ? (
+            <Grid.Col span={4} className={classes.child}>
+              <div
+                style={{
+                  position: "relative",
+                  minHeight: 120,
+                  minWidth: 120,
+                }}
+              >
+                <Image src={URL.createObjectURL(image)} layout="fill" />
+              </div>
+              <Text size="xs">
+                {image.path} - {image.size} bytes
+              </Text>
+            </Grid.Col>
+          ) : (
+            <Grid.Col
+              span={12}
+              sx={{ justifyContent: "center", alignItems: "center" }}
+            >
+              <Text> No upload</Text>
+            </Grid.Col>
+          )}
+        </Grid>
+      </div>
     </>
   );
 }

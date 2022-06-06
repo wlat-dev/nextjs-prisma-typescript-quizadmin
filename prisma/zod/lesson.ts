@@ -7,7 +7,7 @@ export const LessonModel = z.object({
   updated_at: z.date().nullish(),
   author: z.string().nullish(),
   module_id: z.string().nullish(),
-  lesson_title: z.string().nullish(),
+  title: z.string().nullish(),
 })
 
 export interface CompleteLesson extends z.infer<typeof LessonModel> {

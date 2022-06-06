@@ -17,7 +17,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           course: {
             select: {
               id: true,
-              course_title: true,
+              title: true,
             },
           },
         },
@@ -28,7 +28,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   let enrolledCourses = [];
   // make utility function
   for (const property in enrollments) {
-    enrolledCourses.push(enrollments[Number(property)].course?.course_title);
+    enrolledCourses.push(enrollments[Number(property)].course?.title);
   }
   res.status(200).json({ enrolledCourses });
 };

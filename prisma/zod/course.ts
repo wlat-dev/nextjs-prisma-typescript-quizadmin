@@ -6,7 +6,7 @@ export const CourseModel = z.object({
   created_at: z.date(),
   updated_at: z.date().nullish(),
   instructor_id: z.string().nullish(),
-  course_title: z.string(),
+  title: z.string(),
   author: z.string().nullish(),
 })
 

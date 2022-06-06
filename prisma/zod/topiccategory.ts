@@ -5,7 +5,7 @@ export const TopicCategoryModel = z.object({
   id: z.string(),
   created_at: z.date(),
   updated_at: z.date().nullish(),
-  topic_category_title: z.string(),
+  title: z.string(),
 })
 
 export interface CompleteTopicCategory extends z.infer<typeof TopicCategoryModel> {

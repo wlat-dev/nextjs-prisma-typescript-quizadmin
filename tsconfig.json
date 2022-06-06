@@ -24,6 +24,6 @@
     "hooks/useSession/useSession.ts",
     "pages/api/prismatest.ts",
     "prisma/zod"
-, "jest.config.js", "prisma/zod", "src/utils/useSession.js", "src/components/admin/QuestionBuilder"  ],
+, "jest.config.js", "prisma/zod", "src/utils/useSession.js", "src/components/admin/QuestionBuilder", "src/utils/prisma.ts"  ],
   "exclude": ["node_modules"]
 }

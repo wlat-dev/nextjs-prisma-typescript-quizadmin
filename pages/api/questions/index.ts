@@ -15,14 +15,13 @@ export default async function handle(
     equation,
     question_text,
     answer_formula,
-    topic,
-    quiz,
-  } = req.body;
+    topics,
+    quizzes,
+  } = JSON.parse(req.body);
 
   const token = await getToken({ req, secret });
 
   if (token?.userRole === "ADMIN") {
-    console.log("accessed questions/post");
     const result = await prisma.question.create({
       data: {
         author: token?.name,
@@ -31,8 +30,8 @@ export default async function handle(
         equation: equation,
         question_text: question_text,
         answer_formula: answer_formula,
-        topics: topic ?? null,
-        quizzes: quiz ?? null,
+        topics: undefined,
+        quizzes: undefined,
       },
     });
     res.json(result);

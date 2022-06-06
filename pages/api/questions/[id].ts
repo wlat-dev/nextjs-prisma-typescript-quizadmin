@@ -16,6 +16,7 @@ export default async function handle(
     answer_formula,
   } = req.body;
 
+  console.log("getting putting or deleting...")
   const questionId = req.query.id.toString();
   const token = await getToken({ req, secret });
 

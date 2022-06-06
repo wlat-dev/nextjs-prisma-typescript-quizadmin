@@ -6,7 +6,7 @@ export const QuizModel = z.object({
   created_at: z.date(),
   updated_at: z.date().nullish(),
   author: z.string().nullish(),
-  quiz_title: z.string(),
+  title: z.string(),
 })
 
 export interface CompleteQuiz extends z.infer<typeof QuizModel> {

@@ -1,10 +1,8 @@
 import React from "react";
-import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
 import "katex/dist/katex.min.css";
-import { useForm } from "@mantine/form";
 import {
   Paper,
   Container,
@@ -12,79 +10,72 @@ import {
   TextInput,
   NumberInput,
   useMantineTheme,
-  Text,
   Textarea,
-  createStyles,
   MultiSelect,
   Button,
 } from "@mantine/core";
-import { FileWithPath, useDropzone } from "react-dropzone";
-import { useQuery } from "react-query";
-import {
-  GetStaticProps,
-  InferGetStaticPropsType,
-  NextPageContext,
-} from "next/types";
+import { GetStaticProps } from "next/types";
+import { Quiz, Topic } from "@prisma/client";
 import prisma from "../../src/utils/prisma";
+import { useS3Upload } from "next-s3-upload";
 
-import { Prisma, Question, Quiz, Topic } from "@prisma/client";
+interface Props {
+  quizzes: Quiz[];
+  topics: Topic[];
+}
 
-import MediaUploader from "../../src/components/admin/QuestionBuilder/MediaUploader";
-import { useSession } from "../../src/utils/useSession";
-import { responseSymbol } from "next/dist/server/web/spec-compliant/fetch-event";
-import { string } from "zod";
-
-
-export default function questionbuilder({
-  topics,
-  quizzes,
-}: InferGetStaticPropsType<typeof getStaticProps>) {
+export default function questionbuilder(props: Props) {
   const [difficulty, setDifficulty] = React.useState<number>(0);
-  const [image, setImage] = React.useState<FileWithPath | undefined>();
+  const [imageUrl, setImageUrl] = React.useState<string>("");
   const [equation, setEquationValue] = React.useState<string>("");
   const [questionText, setQuestionText] = React.useState<string>("");
   const [answer, setAnswer] = React.useState<string>("");
-  const [selectedQuiz, setSelectedQuiz] = React.useState<Quiz>();
-  const [selectedTopic, setSelectedTopic] = React.useState<Topic>();
+  const [selectedQuizTitles, setSelectedQuizTitles] = React.useState<
+    Array<string>
+  >([]);
+  const [selectedTopicTitles, setSelectedTopicTitles] = React.useState<
+    Array<string>
+  >([]);
 
+  let { FileInput, openFileDialog, uploadToS3 } = useS3Upload();
 
-  // let quizOptions: object[][] = [];
-  // if (quizzes) {
-  //   quizzes.forEach((quiz: Quiz) => {
-  //     quizOptions.push([
-  //       quiz,
-  //       {
-  //         label: quiz.quiz_title,
-  //         value: quiz.id,
-  //       },
-  //     ]);
-  //   });
-  // }
+  function getSelectOptions<T extends { title: string }>(
+    options: Array<T>
+  ): Array<{ value: string; label: string }> {
+    return options.map((option: T, index: number) => ({
+      value: option.title,
+      label: option.title,
+    }));
+  }
 
   const theme = useMantineTheme();
 
-  const postQuestion = () => {
-    const data = {
-      difficulty: difficulty,
-      image_url: image ? URL.createObjectURL(image) : null,
-      equation: equation,
-      question_text: questionText,
-      answer_formula: answer,
-      topics: selectedTopic,
-      quizzes: selectedQuiz,
-    };
-    fetch("/api/questions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    }).then((res) => res.json());
+  const handleFileChange = async (file: File) => {
+    let { url } = await uploadToS3(file);
+    setImageUrl(url);
   };
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    postQuestion();
+    const data = {
+      difficulty: difficulty,
+      image_url: imageUrl,
+      equation: equation,
+      question_text: questionText,
+      answer_formula: answer,
+      quizzes: props.quizzes.filter((quiz: Quiz) =>
+        selectedQuizTitles.includes(quiz.title)
+      ),
+      topics: props.topics.filter((topic: Topic) =>
+        selectedTopicTitles.includes(topic.title)
+      ),
+    };
+    fetch("/api/questions/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+      .then((response) => response.json())
+      .then((json) => console.log(json));
   };
 
   return (
@@ -92,7 +83,6 @@ export default function questionbuilder({
       <Paper shadow="sm" radius="lg" p="md">
         <form onSubmit={handleSubmit}>
           <Grid grow gutter="xl" styles={{ alignItems: "center" }}>
-            {/* Equation */}
             <Grid.Col span={6}>
               <TextInput
                 label="Equation"
@@ -107,7 +97,6 @@ export default function questionbuilder({
                 rehypePlugins={[rehypeKatex]}
               />
             </Grid.Col>
-            {/* Difficulty */}
             <Grid.Col span={6}>
               <NumberInput
                 label="Difficulty"
@@ -123,9 +112,9 @@ export default function questionbuilder({
               {difficulty}
             </Grid.Col>
             <Grid.Col span={12} mt="lg">
-              <MediaUploader setImage={setImage} />
+              <FileInput onChange={handleFileChange} />
+              <Button onClick={openFileDialog}>Upload file</Button>
             </Grid.Col>
-            {/* Question Text */}
             <Grid.Col span={12} mt="lg">
               <Textarea
                 label="Question Text"
@@ -146,7 +135,6 @@ export default function questionbuilder({
                 rehypePlugins={[rehypeKatex]}
               />
             </Grid.Col>
-            {/* Answer */}
             <Grid.Col span={12}>
               <Textarea
                 label="Answer"
@@ -154,27 +142,23 @@ export default function questionbuilder({
                 onChange={(event) => setAnswer(event.target.value)}
               />
             </Grid.Col>
-            <Grid.Col span={12} mt={"lg"}>
-              <select
-                onChange={(e) => setSelectedQuiz(quizzes[e.target.value])}
-              >
-                {quizzes.map((option: Quiz, index: number) => (
-                  <option key={index} value={index}>
-                    {option.quiz_title}
-                  </option>
-                ))}
-              </select>
+            <Grid.Col span={12}>
+              <MultiSelect
+                data={props.quizzes ? getSelectOptions(props.quizzes) : []}
+                value={selectedQuizTitles}
+                onChange={setSelectedQuizTitles}
+                label="Quizzes this question will be assigned to"
+                placeholder="Select quizzes"
+              />
             </Grid.Col>
-            <Grid.Col span={12} mt={"lg"}>
-              <select
-                onChange={(e) => setSelectedTopic(topics[e.target.value])}
-              >
-                {topics.map((option: Topic, index: number) => (
-                  <option key={index} value={index}>
-                    {option.topic_title}
-                  </option>
-                ))}
-              </select>
+            <Grid.Col span={12}>
+              <MultiSelect
+                data={props.topics ? getSelectOptions(props.topics) : []}
+                value={selectedTopicTitles}
+                onChange={setSelectedTopicTitles}
+                label="Topics to assign to question"
+                placeholder="Select topics"
+              />
             </Grid.Col>
             <Button type="submit" mx="auto" mt="lg">
               Submit
@@ -187,14 +171,12 @@ export default function questionbuilder({
 }
 
 export const getStaticProps: GetStaticProps = async () => {
+  const quizzes = await prisma.quiz.findMany();
   const topics = await prisma.topic.findMany();
-
-  const quizzes: Quiz[] = await prisma.quiz.findMany();
-
   return {
     props: {
-      topics,
       quizzes,
+      topics,
     },
   };
 };
