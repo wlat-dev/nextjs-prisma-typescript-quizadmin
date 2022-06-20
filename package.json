@@ -54,6 +54,7 @@
     "react-dropzone": "^14.2.0",
     "react-markdown": "^8.0.3",
     "react-query": "^3.34.19",
+    "readme-md-generator": "^1.0.0",
     "rehype-autolink-headings": "^6.1.1",
     "rehype-katex": "^6.0.2",
     "rehype-preset-minify": "^6.0.0",

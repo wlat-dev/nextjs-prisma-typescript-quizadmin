@@ -1,5 +1,29 @@
-This app is an incomplete LMS that successfully implements role-based authentication and CRUD Rest functionality, and it renders Markdown with KaTeX through Rehype/Remark plugins in real-time. 
+<h1 align="center">Welcome to latshaw-prep 👋</h1>
+<p>
+  <img alt="Version" src="https://img.shields.io/badge/version-0.0.1-blue.svg?cacheSeconds=2592000" />
+</p>
 
-## State of this project
+## Install
 
-The intent of this project was to create a light LMS for creating practice quizzes for my students, which I hoped to extend to a reusable Next.js LMS template. However, as it has grown, so too has its scope -- I now seek to create a standalone subscription service, and the business logic is growing prohibitively complex. To that end, I am writing the backend in Express and refactoring the frontend.
+```sh
+yarn install
+```
+
+## Usage
+
+```sh
+yarn run start
+```
+
+## Run tests
+
+```sh
+yarn run test
+```
+
+## Show your support
+
+Give a ⭐️ if this project helped you!
+
+***
+_This README was generated with ❤️ by [readme-md-generator](https://github.com/kefranabg/readme-md-generator)_
