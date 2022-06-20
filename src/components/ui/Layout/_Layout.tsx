@@ -2,7 +2,6 @@ import Footer from "./_Footer";
 import React, { SetStateAction } from "react";
 import {
   AppShell,
-  Navbar,
   MediaQuery,
   Aside,
   Burger,
@@ -11,13 +10,13 @@ import {
 } from "@mantine/core";
 import Header from "./_Header";
 import ColorSchemeToggle from "./ColorSchemeToggle";
+import Navbar from "./_Navbar";
 
 export default function _Layout({
   children,
 }: {
   children: React.ReactNode;
 }): React.ReactElement {
-  /* Navbar State */
   const [open, setOpen] = React.useState(false);
 
   const theme = useMantineTheme();

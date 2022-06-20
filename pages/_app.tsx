@@ -34,6 +34,13 @@ type CustomAppProps = AppProps & {
   Component: NextComponentType & { auth?: boolean }; // add auth type
 };
 
+interface ILayoutContext {
+  isVisible: boolean;
+  setIsVisible: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export const LayoutContext = React.createContext<ILayoutContext | null>(null);
+
 export default function App(
   props: CustomAppProps & { colorScheme: ColorScheme }
 ) {
@@ -41,7 +48,6 @@ export default function App(
 
   const { Component, pageProps } = props;
 
-  /* Toggle Color Scheme */
   const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
     key: "mantine-color-scheme",
     defaultValue: "light",
@@ -51,7 +57,11 @@ export default function App(
   const toggleColorScheme = (value?: ColorScheme) =>
     setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
 
+  /* toggle side nav visibility */
   const [isVisible, setIsVisible] = React.useState(true);
+  const layoutValue = React.useMemo(() => {
+    return { isVisible, setIsVisible };
+  }, [isVisible]);
 
   return (
     <>
@@ -78,9 +88,11 @@ export default function App(
               <Hydrate state={pageProps.dehydratedState}>
                 <SessionProvider>
                   <Auth>
-                    <Layout visible={{ isVisible, setIsVisible }}>
-                      <Component {...pageProps} />
-                    </Layout>
+                    <LayoutContext.Provider value={layoutValue}>
+                      <Layout>
+                        <Component {...pageProps} />
+                      </Layout>
+                    </LayoutContext.Provider>
                   </Auth>
                 </SessionProvider>
               </Hydrate>
@@ -89,7 +101,7 @@ export default function App(
         </MantineProvider>
       </ColorSchemeProvider>
     </>
-  );
+  )
 }
 
 const Auth = ({ children }: React.PropsWithChildren<{}>) => {

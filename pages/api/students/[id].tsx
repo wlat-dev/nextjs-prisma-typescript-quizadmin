@@ -50,7 +50,7 @@ export default async function handle(
             include: {
               course: {
                 select: {
-                  course_title: true,
+                 title: true,
                 },
               },
             },
@@ -74,12 +74,12 @@ export default async function handle(
                     include: {
                       topics: {
                         select: {
-                          topic_title: true,
+                          title: true,
                         },
                         include: {
                           topic_category: {
                             select: {
-                              topic_category_title: true,
+                              title: true,
                             },
                           },
                         },

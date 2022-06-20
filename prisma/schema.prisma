@@ -70,6 +70,7 @@ model Course {
   instructor_id String?
   title         String       @unique
   author        String?
+  modules       Module[]
   enrollment    Enrollment[]
 }
 
@@ -93,25 +94,28 @@ model Instructor {
 }
 
 model Lesson {
-  id         String    @id @default(cuid())
-  created_at DateTime  @default(now())
-  updated_at DateTime? @updatedAt
-  author     String?
-  module_id  String?
-  title      String?
-  module     Module?   @relation(fields: [module_id], references: [id])
+  id              String    @id @default(cuid())
+  created_at      DateTime  @default(now())
+  updated_at      DateTime? @updatedAt
+  author          String?
+  title           String    @unique
+  module          Module?   @relation(fields: [lesson_module_name], references: [module_name])
+  lesson_module_name       String?
+  order_in_module Int       @default(autoincrement())
+  quizzes         Quiz[]
 }
 
 model Module {
-  id                String    @id @default(cuid())
-  created_at        DateTime  @default(now())
-  updated_at        DateTime? @updatedAt
-  author            String?
-  module_name       String    @unique
-  subject           Subject?  @relation(fields: [module_subject_id], references: [id])
-  module_subject_id String?
-  lesson            Lesson[]
-  quiz              Quiz[]
+  id                  String    @id @default(cuid())
+  created_at          DateTime  @default(now())
+  updated_at          DateTime? @updatedAt
+  author              String?
+  module_name         String    @unique
+  subject             Subject?  @relation(fields: [module_subject_id], references: [id])
+  course              Course?   @relation(fields: [module_course_title], references: [title])
+  module_subject_id   String?
+  module_course_title String?
+  lessons             Lesson[]
 }
 
 model TopicCategory {
@@ -168,7 +172,7 @@ model Quiz {
   title      String        @unique
   attempts   QuizAttempt[]
   questions  Question[]
-  modules    Module[]
+  lessons    Lesson[]
 }
 
 model Student {

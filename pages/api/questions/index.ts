@@ -39,3 +39,23 @@ export default async function handle(
     res.status(401).send({ message: "Unauthorized " });
   }
 }
+
+
+/*
+
+topics: topics
+          ? {
+              connect: topics.map((topic: Topic) => {
+                return { id: topic.id };
+              }),
+            }
+          : undefined,
+        quizzes: quizzes
+          ? {
+              connect: quizzes.map((quiz: Quiz) => {
+                return { id: quiz.id };
+              }),
+            }
+          : undefined,
+
+*/

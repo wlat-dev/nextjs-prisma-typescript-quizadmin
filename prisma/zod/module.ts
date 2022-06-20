@@ -1,5 +1,5 @@
 import * as z from "zod"
-import { CompleteSubject, RelatedSubjectModel, CompleteLesson, RelatedLessonModel, CompleteQuiz, RelatedQuizModel } from "./index"
+import { CompleteSubject, RelatedSubjectModel, CompleteCourse, RelatedCourseModel, CompleteLesson, RelatedLessonModel } from "./index"
 
 export const ModuleModel = z.object({
   id: z.string(),
@@ -8,12 +8,13 @@ export const ModuleModel = z.object({
   author: z.string().nullish(),
   module_name: z.string(),
   module_subject_id: z.string().nullish(),
+  module_course_title: z.string().nullish(),
 })
 
 export interface CompleteModule extends z.infer<typeof ModuleModel> {
   subject?: CompleteSubject | null
-  lesson: CompleteLesson[]
-  quiz: CompleteQuiz[]
+  course?: CompleteCourse | null
+  lessons: CompleteLesson[]
 }
 
 /**
@@ -23,6 +24,6 @@ export interface CompleteModule extends z.infer<typeof ModuleModel> {
  */
 export const RelatedModuleModel: z.ZodSchema<CompleteModule> = z.lazy(() => ModuleModel.extend({
   subject: RelatedSubjectModel.nullish(),
-  lesson: RelatedLessonModel.array(),
-  quiz: RelatedQuizModel.array(),
+  course: RelatedCourseModel.nullish(),
+  lessons: RelatedLessonModel.array(),
 }))
